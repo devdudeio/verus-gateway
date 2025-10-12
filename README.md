@@ -173,8 +173,11 @@ GET /c/{chain}/file/{txid_or_filename}?txid={txid}&evk={evk}
 **Examples:**
 
 ```bash
+# Get encrypted file by filename with TXID and viewing key (working example on vrsctest)
+curl "http://localhost:8080/c/vrsctest/file/lee.gif?txid=004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47&evk=zxviews1qdugfjmfqyqqpqxv03ees2eymyvvfa8uhhjcfkezhsleu9686l92w6cycx8jazta4metc3lx7jjly7um6vxujtzj2dt7xw8m7gd0suw56pshraqf34s3ltww9tvr049h4j78duw7w7gvkzfmwvk6k00zgpynq8pwr8h9wk0f47v5cjaczq9y3dndtcsntszt5rl2qsage9dc7ctuevhnvhynex44fnqy0wde3xppuzp2qfdg3tgnp2sn6pajxjfqy355eutvdgsl77sddcuep"
+
 # Get file by TXID (64 hex characters)
-curl "http://localhost:8080/c/vrsctest/file/abc123def456...?evk=zxviews..."
+curl "http://localhost:8080/c/vrsctest/file/004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47"
 
 # Get file by filename with TXID as query param
 curl "http://localhost:8080/c/vrsctest/file/document.pdf?txid=abc123...&evk=zxviews..."
