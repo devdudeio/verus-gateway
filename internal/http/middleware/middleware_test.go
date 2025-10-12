@@ -311,7 +311,7 @@ func TestNormalizePath(t *testing.T) {
 		{
 			name:     "path exactly 65 chars (> 64 - should truncate to 32 + ...)",
 			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwxyzA", // 65 chars
-			expected: "/c/vrsctest/file/abc123def456ghi...", // first 32 chars + "..."
+			expected: "/c/vrsctest/file/abc123def456ghi...",                               // first 32 chars + "..."
 		},
 		{
 			name:     "very long path (should truncate to 32 + ...)",
