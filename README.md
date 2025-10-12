@@ -19,13 +19,13 @@ A high-performance, production-ready HTTP gateway for accessing files stored on 
 
 ## 📋 Table of Contents
 
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Development](#development)
-- [Architecture](#architecture)
-- [Contributing](#contributing)
+- [Quick Start](#-quick-start)
+- [Configuration](#-configuration)
+- [API Documentation](#-api-documentation)
+- [Deployment](#-deployment)
+- [Development](#-development)
+- [Architecture](#-architecture)
+- [Contributing](#-contributing)
 
 ## ⚡ Quick Start
 
@@ -135,7 +135,7 @@ Supported chains:
 
 ### Migration from Old Gateway
 
-If you're migrating from an older gateway version (beamup-gateway), note the URL format changes:
+If you're migrating from an older gateway version, note the URL format changes:
 
 **Old format:**
 ```
@@ -558,7 +558,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - The Verus community for building an innovative blockchain
 - All contributors and maintainers
-- Inspired by the original beamup-gateway
 
 ## 📞 Support
 
