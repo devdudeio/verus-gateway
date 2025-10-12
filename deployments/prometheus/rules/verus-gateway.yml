@@ -1,0 +1,97 @@
+groups:
+  - name: verus_gateway_recording_rules
+    interval: 30s
+    rules:
+      # HTTP request rate by path
+      - record: verus_gateway:http_requests:rate5m
+        expr: rate(verus_gateway_http_requests_total[5m])
+
+      # HTTP error rate (4xx and 5xx)
+      - record: verus_gateway:http_errors:rate5m
+        expr: rate(verus_gateway_http_requests_total{status=~"4..|5.."}[5m])
+
+      # HTTP success rate percentage
+      - record: verus_gateway:http_success_rate:percent
+        expr: |
+          (
+            sum(rate(verus_gateway_http_requests_total{status=~"2.."}[5m]))
+            /
+            sum(rate(verus_gateway_http_requests_total[5m]))
+          ) * 100
+
+      # Cache hit rate percentage
+      - record: verus_gateway:cache_hit_rate:percent
+        expr: |
+          (
+            rate(verus_gateway_cache_hits_total[5m])
+            /
+            (rate(verus_gateway_cache_hits_total[5m]) + rate(verus_gateway_cache_misses_total[5m]))
+          ) * 100
+
+      # RPC request rate by chain
+      - record: verus_gateway:rpc_requests:rate5m
+        expr: rate(verus_gateway_rpc_requests_total[5m])
+
+      # RPC error rate
+      - record: verus_gateway:rpc_errors:rate5m
+        expr: rate(verus_gateway_rpc_errors_total[5m])
+
+      # P95 HTTP latency
+      - record: verus_gateway:http_request_duration:p95
+        expr: histogram_quantile(0.95, sum(rate(verus_gateway_http_request_duration_seconds_bucket[5m])) by (le, path))
+
+      # P99 HTTP latency
+      - record: verus_gateway:http_request_duration:p99
+        expr: histogram_quantile(0.99, sum(rate(verus_gateway_http_request_duration_seconds_bucket[5m])) by (le, path))
+
+  - name: verus_gateway_alerts
+    rules:
+      # High error rate alert
+      - alert: HighHTTPErrorRate
+        expr: verus_gateway:http_errors:rate5m > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "HTTP error rate is {{ $value }} errors/sec (threshold: 10/sec)"
+
+      # Low cache hit rate alert
+      - alert: LowCacheHitRate
+        expr: verus_gateway:cache_hit_rate:percent < 50
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value }}% (threshold: 50%)"
+
+      # High RPC error rate
+      - alert: HighRPCErrorRate
+        expr: verus_gateway:rpc_errors:rate5m > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RPC error rate detected"
+          description: "RPC error rate is {{ $value }} errors/sec for {{ $labels.chain }}"
+
+      # High latency alert
+      - alert: HighLatency
+        expr: verus_gateway:http_request_duration:p95 > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency detected"
+          description: "P95 latency is {{ $value }}s for {{ $labels.path }} (threshold: 1s)"
+
+      # Gateway down
+      - alert: GatewayDown
+        expr: up{job="verus-gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Verus Gateway is down"
+          description: "The gateway has been unreachable for more than 1 minute"

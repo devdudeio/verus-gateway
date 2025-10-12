@@ -1,0 +1,35 @@
+# golangci-lint configuration for Verus Gateway
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - govet          # Vet examines Go source code and reports suspicious constructs
+    - ineffassign    # Detects ineffectual assignments
+    - staticcheck    # Go static analysis (includes gosimple)
+    - unused         # Checks for unused constants, variables, functions and types
+    - misspell       # Check spelling
+    - bodyclose      # Checks whether HTTP response body is closed
+    - errname        # Checks that error types are named correctly
+    - whitespace     # Detects leading and trailing whitespace
+  disable:
+    - errcheck       # Too many false positives in HTTP handlers
+
+  settings:
+    govet:
+      settings:
+        printf:
+          funcs:
+            - (github.com/sirupsen/logrus.FieldLogger).Infof
+            - (github.com/sirupsen/logrus.FieldLogger).Warnf
+            - (github.com/sirupsen/logrus.FieldLogger).Errorf
+
+  exclusions:
+    rules:
+      # Exclude errcheck from test files
+      - path: _test\.go$
+        linters:
+          - errcheck

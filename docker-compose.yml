@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: verus-gateway:dev
+    container_name: verus-gateway-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount config file (create from example first)
+      - ./config.yaml:/app/config.yaml:ro
+      # Persistent cache directory
+      - ./cache:/app/cache
+    environment:
+      # Override config with environment variables if needed
+      - VERUS_GATEWAY_OBSERVABILITY_LOGGING_LEVEL=debug
+      - VERUS_GATEWAY_OBSERVABILITY_LOGGING_FORMAT=text
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - verus-gateway-network
+
+  # Optional: Add a local Redis for cache testing
+  # Uncomment to use Redis cache in development
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: verus-gateway-redis-dev
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   command: redis-server --appendonly yes
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #   networks:
+  #     - verus-gateway-network
+
+networks:
+  verus-gateway-network:
+    driver: bridge
+
+# Uncomment if using Redis
+# volumes:
+#   redis-data:

@@ -1,0 +1,128 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace file
+go.work
+
+# Build artifacts
+/verus-gateway
+/gateway
+/dist/
+/bin/
+/build/
+
+# Dependencies
+/vendor/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+*.env
+!.env.example
+
+# Config files (except examples)
+config.yaml
+config.yml
+config.json
+config.production.yaml
+config.production.yml
+config.staging.yaml
+config.staging.yml
+!config.example.yaml
+!config.example.json
+!config.test.yaml
+
+# Secrets and credentials
+secrets/
+*.secret
+*.secrets
+credentials.json
+*credentials*.yaml
+*credentials*.yml
+.credentials
+
+# Cache directories
+/cache/
+**/cache/
+!internal/cache/
+*.cache
+test-cache/
+*-cache/
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+/tmp/
+*.tmp
+
+# OS specific
+Thumbs.db
+
+# CI/CD
+.github/workflows/*.local.yml
+
+# Development
+*.pprof
+*.prof
+
+# Local testing
+/testdata/temp/
+
+# SSL/TLS certificates and keys
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+*.keystore
+ssl/
+certs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# API keys and tokens
+.api-key
+.api-keys
+api-keys.txt
+*.token
+
+# Docker secrets
+docker-compose.override.yml
+docker-compose.local.yml

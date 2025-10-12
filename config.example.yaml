@@ -1,0 +1,131 @@
+# Verus Gateway Configuration Example
+# Copy this file to config.yaml and customize for your environment
+
+server:
+  port: 8080
+  host: 0.0.0.0
+  read_timeout: 60s   # Increased for file decryption operations
+  write_timeout: 120s # Increased for large file transfers
+  idle_timeout: 120s
+  shutdown_timeout: 30s
+  max_request_size: 33554432  # 32MB
+
+chains:
+  # Default chain to use when no chain is specified in the request
+  default: vrsc
+
+  chains:
+    # Verus Mainnet
+    vrsc:
+      name: "Verus Mainnet"
+      enabled: true
+      rpc_url: "http://localhost:27486"
+      rpc_user: "your_rpc_user"
+      rpc_password: "your_rpc_password"
+      rpc_timeout: 30s
+      tls_insecure: false
+      max_retries: 3
+      retry_delay: 500ms
+
+    # Verus Testnet
+    vrsctest:
+      name: "Verus Testnet"
+      enabled: true
+      rpc_url: "http://localhost:18843"
+      rpc_user: "your_testnet_rpc_user"
+      rpc_password: "your_testnet_rpc_password"
+      rpc_timeout: 30s
+      tls_insecure: false
+      max_retries: 3
+      retry_delay: 500ms
+
+    # PBaaS Chain Example (CHIPS)
+    # chips:
+    #   name: "CHIPS"
+    #   enabled: true
+    #   rpc_url: "http://localhost:27787"
+    #   rpc_user: "chips_rpc_user"
+    #   rpc_password: "chips_rpc_password"
+    #   rpc_timeout: 30s
+    #   tls_insecure: false
+    #   max_retries: 3
+    #   retry_delay: 500ms
+
+cache:
+  # Type: filesystem, redis, memcached, multi
+  type: filesystem
+
+  # Filesystem cache settings
+  dir: ./cache
+  max_size: 1073741824  # 1GB
+  ttl: 24h
+  cleanup_interval: 1h
+
+  # Redis cache settings (used when type is 'redis' or 'multi')
+  redis:
+    addresses:
+      - localhost:6379
+    password: ""
+    db: 0
+    max_retries: 3
+    pool_size: 10
+    timeout: 5s
+
+  # Memcached cache settings (used when type is 'memcached')
+  memcached:
+    servers:
+      - localhost:11211
+    timeout: 5s
+
+security:
+  cors:
+    enabled: true
+    allowed_origins:
+      - "*"  # Change to specific domains in production
+    allowed_methods:
+      - GET
+      - HEAD
+      - OPTIONS
+    allowed_headers:
+      - Content-Type
+      - Authorization
+      - X-Requested-With
+    expose_headers:
+      - Content-Length
+      - Content-Type
+    max_age: 3600
+
+  max_filename_length: 255
+
+  allowed_methods:
+    - GET
+    - HEAD
+    - OPTIONS
+
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+
+rate_limit:
+  enabled: true
+  window_size: 10s
+  max_requests: 30
+  burst: 10
+
+observability:
+  logging:
+    level: info  # debug, info, warn, error
+    format: json  # json, text
+    output: stdout  # stdout, stderr, file
+    file_path: ""  # Only used when output is 'file'
+
+  metrics:
+    enabled: true
+    path: /metrics
+    port: 9090
+
+  tracing:
+    enabled: false
+    provider: jaeger  # jaeger, otlp
+    endpoint: http://localhost:14268/api/traces
+    sample_rate: 0.1

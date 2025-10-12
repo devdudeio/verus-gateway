@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  gateway:
+    image: ghcr.io/devdudeio/verus-gateway:latest
+    container_name: verus-gateway-prod
+    # Bind to localhost only - use reverse proxy for external access
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Mount production config
+      - ./config.production.yaml:/app/config.yaml:ro
+    environment:
+      # Production environment settings
+      - VERUS_GATEWAY_OBSERVABILITY_LOGGING_LEVEL=info
+      - VERUS_GATEWAY_OBSERVABILITY_LOGGING_FORMAT=json
+      # Use Redis for caching
+      - VERUS_GATEWAY_CACHE_TYPE=redis
+      - VERUS_GATEWAY_CACHE_REDIS_ADDRESSES=redis:6379
+      - VERUS_GATEWAY_CACHE_TTL=24h
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - verus-gateway-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  redis:
+    image: redis:7-alpine
+    container_name: verus-gateway-redis-prod
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - verus-gateway-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # Optional: Prometheus for monitoring
+  # Uncomment to enable metrics collection
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: verus-gateway-prometheus
+  #   ports:
+  #     - "127.0.0.1:9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - ./deployments/prometheus/rules:/etc/prometheus/rules:ro
+  #     - prometheus-data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #     - '--storage.tsdb.retention.time=30d'
+  #   restart: always
+  #   networks:
+  #     - verus-gateway-network
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "50m"
+  #       max-file: "3"
+
+  # Optional: Grafana for visualization
+  # Uncomment to enable dashboards
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: verus-gateway-grafana
+  #   ports:
+  #     - "127.0.0.1:3000:3000"
+  #   volumes:
+  #     - grafana-data:/var/lib/grafana
+  #     - ./deployments/grafana/provisioning:/etc/grafana/provisioning:ro
+  #     - ./deployments/grafana/dashboards:/etc/grafana/dashboards:ro
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=changeme
+  #     - GF_INSTALL_PLUGINS=
+  #   depends_on:
+  #     - prometheus
+  #   restart: always
+  #   networks:
+  #     - verus-gateway-network
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "50m"
+  #       max-file: "3"
+
+networks:
+  verus-gateway-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+  # Uncomment if using Prometheus/Grafana
+  # prometheus-data:
+  #   driver: local
+  # grafana-data:
+  #   driver: local

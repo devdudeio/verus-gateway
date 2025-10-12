@@ -1,0 +1,49 @@
+# Prometheus configuration for Verus Gateway local development
+
+global:
+  # Scrape interval - how often to scrape targets
+  scrape_interval: 15s
+  # Evaluation interval - how often to evaluate rules
+  evaluation_interval: 15s
+  # Timeout for scraping targets
+  scrape_timeout: 10s
+  # External labels added to all metrics
+  external_labels:
+    cluster: 'verus-gateway-local'
+    environment: 'development'
+
+# Load recording and alerting rules
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Verus Gateway metrics
+  - job_name: 'verus-gateway'
+    static_configs:
+      - targets:
+          - 'gateway:8080'  # Docker Compose service name
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    # Optional: Add labels to all metrics from this job
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'verus-gateway-local'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Redis monitoring (if using redis_exporter)
+  # Uncomment if you add redis_exporter to docker-compose
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets:
+  #         - 'redis-exporter:9121'
+  #   scrape_interval: 15s

@@ -1,0 +1,72 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+docs/
+LICENSE
+CONTRIBUTING.md
+IMPLEMENTATION_PLAN.md
+
+# Build artifacts
+bin/
+*.out
+coverage.out
+*.test
+
+# Cache and temporary files
+cache/
+*.log
+.env
+.env.*
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+*_test.go
+
+# Config files (use volume mounts instead)
+config.yaml
+config.*.yaml
+!config.example.yaml
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Deployment files
+deployments/
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+secrets/
+credentials*
+*.secret
+*.secrets
+.api-key
+.api-keys
+api-keys.txt
+*.token
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+
+# Backup files
+*.bak
+*.backup

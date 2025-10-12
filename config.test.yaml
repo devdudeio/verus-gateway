@@ -1,0 +1,65 @@
+# Test Configuration for Verus Gateway
+# This is a minimal test config that can start the server even without a running Verus node
+
+server:
+  port: 18080
+  host: 127.0.0.1
+  read_timeout: 10s
+  write_timeout: 60s
+  idle_timeout: 120s
+  shutdown_timeout: 5s
+  max_request_size: 33554432
+
+chains:
+  default: vrsctest
+  chains:
+    vrsctest:
+      name: "Verus Testnet"
+      enabled: true
+      rpc_url: "http://localhost:18843"
+      rpc_user: "test_user"
+      rpc_password: "test_password"
+      rpc_timeout: 10s
+      tls_insecure: false
+      max_retries: 2
+      retry_delay: 100ms
+
+cache:
+  type: filesystem
+  dir: ./test-cache
+  max_size: 104857600  # 100MB
+  ttl: 1h
+  cleanup_interval: 10m
+
+security:
+  cors:
+    enabled: true
+    allowed_origins:
+      - "*"
+    allowed_methods:
+      - GET
+      - HEAD
+      - OPTIONS
+    allowed_headers:
+      - Content-Type
+      - Authorization
+    max_age: 3600
+
+  max_filename_length: 255
+
+rate_limit:
+  enabled: false  # Disabled for testing
+
+observability:
+  logging:
+    level: info
+    format: text
+    output: stdout
+
+  metrics:
+    enabled: true
+    path: /metrics
+    port: 9090
+
+  tracing:
+    enabled: false

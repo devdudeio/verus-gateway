@@ -1,0 +1,78 @@
+[Unit]
+Description=Verus Gateway - HTTP Gateway for Verus Blockchain Files
+Documentation=https://github.com/devdudeio/verus-gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=verus-gateway
+Group=verus-gateway
+
+# Start the gateway with config file
+ExecStart=/usr/local/bin/verus-gateway -config /etc/verus-gateway/config.yaml
+
+# Restart configuration
+Restart=on-failure
+RestartSec=5s
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Environment
+# Uncomment to override config with environment variables
+# Environment="VERUS_GATEWAY_SERVER_PORT=8080"
+# Environment="VERUS_GATEWAY_OBSERVABILITY_LOGGING_LEVEL=info"
+
+# Working directory
+WorkingDirectory=/var/lib/verus-gateway
+
+# Security hardening
+# Prevent privilege escalation
+NoNewPrivileges=true
+
+# Filesystem protection
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Allow read-write access to specific directories
+ReadWritePaths=/var/lib/verus-gateway
+ReadWritePaths=/var/log/verus-gateway
+
+# Read-only access to config
+ReadOnlyPaths=/etc/verus-gateway
+
+# Network restrictions
+# RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# Process restrictions
+LimitNOFILE=65536
+LimitNPROC=512
+
+# Memory and CPU limits (adjust based on your needs)
+# MemoryLimit=1G
+# CPUQuota=200%
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# System call filtering
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=verus-gateway
+
+# Journal settings
+# Log level: emerg, alert, crit, err, warning, notice, info, debug
+SyslogLevel=info
+
+[Install]
+WantedBy=multi-user.target
