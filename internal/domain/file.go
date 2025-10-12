@@ -62,7 +62,7 @@ type FileRequest struct {
 	// ChainID is the blockchain identifier
 	ChainID string
 
-	// Filename is the expected filename (for v2 API)
+	// Filename is the expected filename
 	Filename string
 
 	// UseCache indicates whether to use cached version

@@ -657,5 +657,6 @@ netstat -tulpn | grep 8080
 
 For more help, see:
 - [GitHub Issues](https://github.com/devdudeio/verus-gateway/issues)
-- [API Documentation](openapi.yaml)
+- [API Documentation](../README.md#-api-documentation)
+- [OpenAPI Specification](openapi.yaml)
 - [Architecture Documentation](architecture.md)

@@ -285,38 +285,38 @@ func TestNormalizePath(t *testing.T) {
 	}{
 		{
 			name:     "short path",
-			path:     "/api/v1/file",
-			expected: "/api/v1/file",
+			path:     "/c/vrsctest/file",
+			expected: "/c/vrsctest/file",
 		},
 		{
 			name:     "medium path (50 chars)",
-			path:     "/api/v1/file/abc123def456ghi789jkl012mno345pqr678",
-			expected: "/api/v1/file/abc123def456ghi789jkl012mno345pqr678",
+			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr", // 50 chars
+			expected: "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr",
 		},
 		{
 			name:     "path exactly 51 chars (> 50 but <= 64)",
-			path:     "/api/v1/file/abc123def456ghi789jkl012mno345pqr6",
-			expected: "/api/v1/file/abc123def456ghi789jkl012mno345pqr6", // returned as-is
+			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr6", // 51 chars
+			expected: "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr6", // returned as-is
 		},
 		{
 			name:     "path 63 chars (> 50 but <= 64 - returned as-is)",
-			path:     "/api/v1/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yz",
-			expected: "/api/v1/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yz", // returned as-is
+			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwxy", // 63 chars
+			expected: "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwxy", // returned as-is
 		},
 		{
 			name:     "path exactly 64 chars (not > 64 - returned as-is)",
-			path:     "/api/v1/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yzA",
-			expected: "/api/v1/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yzA", // returned as-is
+			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwxyz", // 64 chars
+			expected: "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwxyz", // returned as-is
 		},
 		{
 			name:     "path exactly 65 chars (> 64 - should truncate to 32 + ...)",
-			path:     "/api/v1/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yzAB",
-			expected: "/api/v1/file/abc123def456ghi789j...", // first 32 chars + "..."
+			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwxyzA", // 65 chars
+			expected: "/c/vrsctest/file/abc123def456ghi...", // first 32 chars + "..."
 		},
 		{
 			name:     "very long path (should truncate to 32 + ...)",
-			path:     "/api/v1/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567890abcdefghijklmnopqrstuvwxyz",
-			expected: "/api/v1/file/abc123def456ghi789j...", // first 32 chars + "..."
+			path:     "/c/vrsctest/file/abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567890abcdefghijklmnopqrstuvwxyz",
+			expected: "/c/vrsctest/file/abc123def456ghi...", // first 32 chars + "..."
 		},
 	}
 

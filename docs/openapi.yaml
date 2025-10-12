@@ -4,21 +4,19 @@ info:
   description: |
     A high-performance HTTP gateway for accessing files stored on the Verus blockchain.
 
-    ## ⚠️ OUTDATED DOCUMENTATION
-    **NOTE:** This OpenAPI specification is outdated and does not reflect the current API implementation.
-    The actual API does not use `/v1/` or `/v2/` prefixes. All file endpoints use the format:
-    - `/c/{chain}/file/{txid_or_filename}`
-    - `/c/{chain}/meta/{txid}`
-    - `/c/{chain}/file/{txid}` (HEAD request)
-
-    This file needs to be updated to match the current implementation in `internal/http/server/server.go`.
-    Please refer to the README.md for accurate API documentation.
-
     ## Features
     - Multi-chain support (VRSC, VRSCTEST, PBaaS chains)
     - File retrieval with optional encryption (viewing keys)
     - Built-in caching for high performance
     - Comprehensive metrics and health checks
+
+    ## Chain-Based Routing
+    All file endpoints require the chain to be specified in the URL path using `/c/{chain}/` prefix.
+
+    Supported chains:
+    - `vrsc` - Verus mainnet
+    - `vrsctest` - Verus testnet
+    - Any configured PBaaS chain
 
     ## Authentication
     Currently, no authentication is required for public endpoints.
@@ -32,7 +30,7 @@ info:
     url: https://github.com/devdudeio/verus-gateway
   license:
     name: MIT
-    url: https://github.com/devdudeio/verus-gateway/blob/master/LICENSE
+    url: https://github.com/devdudeio/verus-gateway/blob/main/LICENSE
 
 servers:
   - url: http://localhost:8080
@@ -41,70 +39,50 @@ servers:
     description: Production server
 
 tags:
-  - name: Files (v2)
-    description: File retrieval API v2 (filename-based, recommended)
-  - name: Files (v1)
-    description: File retrieval API v1 (TXID-based)
+  - name: Files
+    description: File retrieval endpoints
   - name: Health
     description: Health check and readiness endpoints
   - name: Admin
     description: Administrative endpoints (cache, metrics)
 
 paths:
-  # API v2 Endpoints (Recommended)
-  /v2/file/{filename}:
+  # File Endpoints
+  /c/{chain}/file/{txid_or_filename}:
     get:
       tags:
-        - Files (v2)
-      summary: Get file by filename (default chain)
-      description: Retrieve a file from the default blockchain using its filename
-      operationId: getFileV2
-      parameters:
-        - $ref: '#/components/parameters/Filename'
-        - $ref: '#/components/parameters/TxidQuery'
-        - $ref: '#/components/parameters/EvkQuery'
-      responses:
-        '200':
-          $ref: '#/components/responses/FileContent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        - Files
+      summary: Get file by TXID or filename
+      description: |
+        Retrieve a file from the specified blockchain.
 
-  /c/{chain}/v2/file/{filename}:
-    get:
-      tags:
-        - Files (v2)
-      summary: Get file by filename (specific chain)
-      description: Retrieve a file from a specific blockchain using its filename
-      operationId: getFileV2Chain
+        **Two retrieval modes:**
+        1. **By TXID**: If path parameter is a 64-character hex string, it's treated as a TXID
+        2. **By Filename**: Otherwise, it's treated as a filename (requires `txid` query parameter)
+      operationId: getFile
       parameters:
         - $ref: '#/components/parameters/Chain'
-        - $ref: '#/components/parameters/Filename'
-        - $ref: '#/components/parameters/TxidQuery'
-        - $ref: '#/components/parameters/EvkQuery'
-      responses:
-        '200':
-          $ref: '#/components/responses/FileContent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  # API v1 Endpoints
-  /v1/file/{txid}:
-    get:
-      tags:
-        - Files (v1)
-      summary: Get file by TXID (default chain)
-      description: Retrieve a file from the default blockchain using its transaction ID
-      operationId: getFileV1
-      parameters:
-        - $ref: '#/components/parameters/TxidPath'
+        - name: txid_or_filename
+          in: path
+          required: true
+          description: Either a TXID (64 hex chars) or filename
+          schema:
+            type: string
+          examples:
+            txid:
+              summary: TXID (64 hex characters)
+              value: 004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47
+            filename:
+              summary: Filename
+              value: document.pdf
+        - name: txid
+          in: query
+          required: false
+          description: Transaction ID (required when using filename mode)
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{64}$'
+          example: 004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47
         - $ref: '#/components/parameters/EvkQuery'
       responses:
         '200':
@@ -118,12 +96,25 @@ paths:
 
     head:
       tags:
-        - Files (v1)
-      summary: Check file existence (default chain)
-      description: Check if a file exists without downloading it
-      operationId: headFileV1
+        - Files
+      summary: Check file existence
+      description: Check if a file exists on the blockchain without downloading it
+      operationId: headFile
       parameters:
-        - $ref: '#/components/parameters/TxidPath'
+        - $ref: '#/components/parameters/Chain'
+        - name: txid_or_filename
+          in: path
+          required: true
+          description: Either a TXID (64 hex chars) or filename
+          schema:
+            type: string
+        - name: txid
+          in: query
+          required: false
+          description: Transaction ID (required when using filename mode)
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{64}$'
         - $ref: '#/components/parameters/EvkQuery'
       responses:
         '200':
@@ -133,90 +124,24 @@ paths:
               $ref: '#/components/headers/ContentType'
             Content-Length:
               $ref: '#/components/headers/ContentLength'
+            Content-Disposition:
+              $ref: '#/components/headers/ContentDisposition'
             X-Request-ID:
               $ref: '#/components/headers/XRequestID'
+            X-Cache-Status:
+              $ref: '#/components/headers/XCacheStatus'
         '404':
           description: File not found
         '500':
           description: Internal server error
 
-  /v1/meta/{txid}:
+  /c/{chain}/meta/{txid}:
     get:
       tags:
-        - Files (v1)
-      summary: Get file metadata (default chain)
+        - Files
+      summary: Get file metadata
       description: Retrieve metadata for a file without downloading the content
-      operationId: getMetaV1
-      parameters:
-        - $ref: '#/components/parameters/TxidPath'
-        - $ref: '#/components/parameters/EvkQuery'
-      responses:
-        '200':
-          description: File metadata
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileMetadata'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /c/{chain}/v1/file/{txid}:
-    get:
-      tags:
-        - Files (v1)
-      summary: Get file by TXID (specific chain)
-      description: Retrieve a file from a specific blockchain using its transaction ID
-      operationId: getFileV1Chain
-      parameters:
-        - $ref: '#/components/parameters/Chain'
-        - $ref: '#/components/parameters/TxidPath'
-        - $ref: '#/components/parameters/EvkQuery'
-      responses:
-        '200':
-          $ref: '#/components/responses/FileContent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-    head:
-      tags:
-        - Files (v1)
-      summary: Check file existence (specific chain)
-      description: Check if a file exists on a specific blockchain without downloading it
-      operationId: headFileV1Chain
-      parameters:
-        - $ref: '#/components/parameters/Chain'
-        - $ref: '#/components/parameters/TxidPath'
-        - $ref: '#/components/parameters/EvkQuery'
-      responses:
-        '200':
-          description: File exists
-          headers:
-            Content-Type:
-              $ref: '#/components/headers/ContentType'
-            Content-Length:
-              $ref: '#/components/headers/ContentLength'
-            X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
-        '404':
-          description: File not found
-        '500':
-          description: Internal server error
-
-  /c/{chain}/v1/meta/{txid}:
-    get:
-      tags:
-        - Files (v1)
-      summary: Get file metadata (specific chain)
-      description: Retrieve metadata for a file from a specific blockchain
-      operationId: getMetaV1Chain
+      operationId: getMeta
       parameters:
         - $ref: '#/components/parameters/Chain'
         - $ref: '#/components/parameters/TxidPath'
@@ -228,6 +153,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FileMetadata'
+              example:
+                txid: 004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47
+                chain: vrsctest
+                filename: lee.gif
+                size: 102400
+                content_type: image/gif
+                extension: gif
+                compressed: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -319,12 +252,21 @@ paths:
                         name:
                           type: string
                           example: Verus Testnet
-                        default:
+                        enabled:
                           type: boolean
                           example: true
-                  count:
-                    type: integer
-                    example: 2
+                  default:
+                    type: string
+                    example: vrsctest
+              example:
+                chains:
+                  - id: vrsc
+                    name: Verus Mainnet
+                    enabled: true
+                  - id: vrsctest
+                    name: Verus Testnet
+                    enabled: true
+                default: vrsctest
 
   # Admin Endpoints
   /metrics:
@@ -341,10 +283,13 @@ paths:
             text/plain:
               schema:
                 type: string
-                example: |
-                  # HELP verus_gateway_http_requests_total Total HTTP requests
-                  # TYPE verus_gateway_http_requests_total counter
-                  verus_gateway_http_requests_total{method="GET",path="/v1/file",status="200"} 42
+              example: |
+                # HELP verus_gateway_http_requests_total Total HTTP requests
+                # TYPE verus_gateway_http_requests_total counter
+                verus_gateway_http_requests_total{method="GET",path="/c/vrsctest/file",status="200"} 42
+                # HELP verus_gateway_cache_hits_total Cache hit count
+                # TYPE verus_gateway_cache_hits_total counter
+                verus_gateway_cache_hits_total 1234
 
   /admin/cache/stats:
     get:
@@ -410,9 +355,10 @@ paths:
         - name: key
           in: path
           required: true
-          description: Cache key to delete
+          description: Cache key to delete (format: chain:txid or chain:txid:encrypted)
           schema:
             type: string
+          example: vrsctest:004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47
       responses:
         '200':
           description: Cache entry deleted
@@ -423,7 +369,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: cache entry {key} deleted successfully
+                    example: cache entry deleted successfully
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -436,95 +382,106 @@ components:
       description: Blockchain network identifier (e.g., vrsctest, vrsc)
       schema:
         type: string
-        example: vrsctest
+        pattern: '^[a-zA-Z0-9_\-]+$'
+      examples:
+        testnet:
+          summary: Verus Testnet
+          value: vrsctest
+        mainnet:
+          summary: Verus Mainnet
+          value: vrsc
 
     TxidPath:
       name: txid
       in: path
       required: true
-      description: Transaction ID containing the file data
+      description: Transaction ID containing the file data (64 hex characters)
       schema:
         type: string
         pattern: '^[a-f0-9]{64}$'
-        example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-
-    TxidQuery:
-      name: txid
-      in: query
-      required: true
-      description: Transaction ID containing the file data
-      schema:
-        type: string
-        pattern: '^[a-f0-9]{64}$'
-        example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-
-    Filename:
-      name: filename
-      in: path
-      required: true
-      description: Original filename of the stored file
-      schema:
-        type: string
-        example: document.pdf
+      example: 004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47
 
     EvkQuery:
       name: evk
       in: query
       required: false
-      description: Viewing key for encrypted files
+      description: Viewing key for encrypted files (starts with 'zxviews')
       schema:
         type: string
-        example: zxviews1q0...
+        pattern: '^zxviews[a-zA-Z0-9]{90,}$'
+        minLength: 95
+        maxLength: 500
+      example: zxviews1qdugfjmfqyqqpqxv03ees2eymyvvfa8uhhjcfkezhsleu9686l92w6cycx8jazta4metc3lx7jjly7um6vxujtzj2dt7xw8m7gd0suw56pshraqf34s3ltww9tvr049h4j78duw7w7gvkzfmwvk6k00zgpynq8pwr8h9wk0f47v5cjaczq9y3dndtcsntszt5rl2qsage9dc7ctuevhnvhynex44fnqy0wde3xppuzp2qfdg3tgnp2sn6pajxjfqy355eutvdgsl77sddcuep
 
   headers:
     ContentType:
       description: MIME type of the file
       schema:
         type: string
-        example: application/pdf
+      examples:
+        pdf:
+          summary: PDF document
+          value: application/pdf
+        image:
+          summary: JPEG image
+          value: image/jpeg
+        gif:
+          summary: GIF image
+          value: image/gif
 
     ContentLength:
       description: File size in bytes
       schema:
         type: integer
-        example: 1024000
+      example: 1024000
 
     ContentDisposition:
       description: Suggested filename for download
       schema:
         type: string
-        example: attachment; filename="document.pdf"
+      example: attachment; filename="document.pdf"
 
     XRequestID:
       description: Unique request identifier for tracing
       schema:
         type: string
         format: uuid
-        example: 550e8400-e29b-41d4-a716-446655440000
+      example: 550e8400-e29b-41d4-a716-446655440000
 
     XCacheStatus:
-      description: Cache hit or miss
+      description: Cache hit or miss status
       schema:
         type: string
         enum: [HIT, MISS]
-        example: HIT
+      example: HIT
 
   schemas:
     FileMetadata:
       type: object
       properties:
+        txid:
+          type: string
+          description: Transaction ID
+          example: 004b2d1e74351bf361f2555e4254481a3aee9f5db173ff2eeff07e6ae540ba47
+        chain:
+          type: string
+          description: Chain identifier
+          example: vrsctest
         filename:
           type: string
+          description: Original filename
           example: document.pdf
-        content_type:
-          type: string
-          example: application/pdf
         size:
           type: integer
           description: File size in bytes
-          example: 1024000
+          example: 102400
+        content_type:
+          type: string
+          description: MIME type
+          example: application/pdf
         extension:
           type: string
+          description: File extension (without dot)
           example: pdf
         compressed:
           type: boolean
@@ -540,6 +497,12 @@ components:
         error:
           type: string
           description: Machine-readable error code
+          enum:
+            - invalid_request
+            - file_not_found
+            - decryption_failed
+            - chain_not_found
+            - internal_error
           example: file_not_found
         message:
           type: string
